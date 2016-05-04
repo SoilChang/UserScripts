@@ -20,7 +20,13 @@
 
     //create button black list button
     var buttonSets = document.createElement('div');
-    buttonSets.innerHTML = '<button id="addtoBL" type="button" class="GM_button" > Banish </button><button id="clear" class="GM_button" type="button" > Free all demon </button><button id="display" class="GM_button" type="button" > show all demon </button>';
+    // buttonSets.innerHTML = '<button id="addtoBL" type="button" class="GM_button" > Banish </button><button id="clear" class="GM_button" type="button" > Free all demon </button><button id="display" class="GM_button" type="button" > show all demon </button>';
+    buttonSets.innerHTML = multilineStr(function(){/*
+        <button id="addtoBL" type="button" class="GM_button" > Banish </button>
+        <button id="clear" class="GM_button" type="button" > Free all demons </button>
+        <button id="display" class="GM_button" type="button" > show all demons </button>
+
+    */});
     
     document.querySelector("#yt-masthead-user").appendChild(buttonSets);
     document.getElementById("addtoBL").addEventListener("click",addtoBlakclist,false);
