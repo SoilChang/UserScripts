@@ -8,6 +8,14 @@
 // @grant       GM_addStyle
 // ==/UserScript==
 
+
+// changes to be made
+// 1. re-style button. Maybe all black with white font
+// 2. make the dropdown work
+// 3. make dropdown panel float
+// 4. move everything inside dropdown
+// 5. Let user do more setting. eg: probabtion day, free individual demon, view all demons in the panel
+// 6. fix if user click button outside song page
 (function() {
     'use strict';
     'allow pasting';
@@ -17,22 +25,26 @@
     var blacklist = { "OPf0YbXqDm0" : "uptown funk" };
 
 
-    //create button black list button
+
+
+    //=============================================  HTML  ============================================
     var buttonSets = document.createElement('div');
     // buttonSets.innerHTML = '<button id="addtoBL" type="button" class="GM_button" > Banish </button><button id="clear" class="GM_button" type="button" > Free all demon </button><button id="display" class="GM_button" type="button" > show all demon </button>';
     buttonSets.innerHTML = multilineStr(function(){/*
         <button id="addtoBL" type="button" class="GM_button" > Banish </button>
         <button id="clear" class="GM_button" type="button" > Free all demons </button>
         <button id="display" class="GM_button" type="button" > show all demons </button>
+        <button id="test" class="GM_button" type="button" > dropdown </button>
+        <div class="dropdownPanel"><div>
 
     */});
     
     document.querySelector("#yt-masthead-user").appendChild(buttonSets);
-    document.getElementById("addtoBL").addEventListener("click",addtoBlakclist,false);
+    document.getElementById("addtoBL").addEventListener("click",addtoBlacklist,false);
     document.getElementById("clear").addEventListener("click",clearBlacklist,false);  
     document.getElementById("display").addEventListener("click",displayBlacklist,false);  
 
-    //========================  CSS ===============================================
+    //=============================================  CSS ===============================================
     GM_addStyle ( multilineStr ( function () {/*!
         #addtoBL {
             background-color:red;
@@ -45,22 +57,37 @@
         .GM_button{
             z-index: 10000;
             cursor: pointer;
-            border: 1px black solid;
+            border: 2px black solid;
+            border-radius:4px;
+
+        }
+
+        #test{
+            display:none;
+        }
+
+        .dropdownPanel{
+            position:absolute:
+            width:50px;
+            height: 150px;
+            z-index:100000;
+            background-color:yellow;
+            display:none;
 
         }
     */} ) );
+
     function multilineStr (dummyFunc) {
         var str = dummyFunc.toString ();
         str     = str.replace (/^[^\/]+\/\*!?/, '') // Strip function () { /*!
                 .replace (/\s*\*\/\s*\}\s*$/, '')   // Strip */ }
-                .replace (/\/\/.+$/gm, '') // Double-slash comments wreck CSS. Strip them.
-                ;
+                .replace (/\/\/.+$/gm, ''); // Double-slash comments wreck CSS. Strip them.
+                
         return str;
     }
     
 
-    // ======================================== functionality starts===============================================
-    
+    // ======================================== JavsScripts  ===============================================
 
     // update function, activated every 4 seconds
 	setInterval(function(){
@@ -73,12 +100,7 @@
 		
 	},4000);
     
-    //     getCookieBlacklist();
-    //     for(var i in blacklist){
-    //       if(window.location.href.indexOf(blacklist[i])> -1){
-    //         nextLink();
-    //       }
-    // }
+
     function checkBlacklist(){
         getCookieBlacklist();
         for(var key in blacklist){
@@ -93,7 +115,7 @@
     }
 
     //when clicked with button add to black list and jump to next song
-    function addtoBlakclist(){
+    function addtoBlacklist(){
         var url = window.location.href;
         var videoId = url.substring(url.indexOf("=")+1);
         addBlacklistCookie(videoId, probationDay);
@@ -173,12 +195,12 @@
             }
         }
         if(debug)console.log("current cookies:\n"+document.cookie);
-        alert("clear!");
+        alert("All demons are again roaming the Earth !");
     }
 
     function displayBlacklist(){
         getCookieBlacklist();
-        var count = 1
+        var count = 1;
         if(  _isEmpty(blacklist) ){
             console.log("No demon found!");
         }else{
