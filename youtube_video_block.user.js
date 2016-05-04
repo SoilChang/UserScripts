@@ -12,10 +12,9 @@
     'use strict';
     'allow pasting';
     var debug = true;
-    var blacklist = ["OPf0YbXqDm0"];
-    var nameList = ["uptown funk"];
     var probationDay = 7;
     var currentURL = "";
+    var blacklist = { "OPf0YbXqDm0" : "uptown funk" };
 
 
     //create button black list button
@@ -74,22 +73,30 @@
 		
 	},4000);
     
+    //     getCookieBlacklist();
+    //     for(var i in blacklist){
+    //       if(window.location.href.indexOf(blacklist[i])> -1){
+    //         nextLink();
+    //       }
+    // }
     function checkBlacklist(){
         getCookieBlacklist();
-        for(var i in blacklist){
-          if(window.location.href.indexOf(blacklist[i])> -1){
-            if(debug) console.log("blacklisted video found");
-            nextLink();
-            break;
+        for(var key in blacklist){
+          if(blacklist.hasOwnProperty(key)){
+            if(window.location.href.indexOf(key)>-1){
+                if(debug) console.log("blacklisted video found");
+                nextLink();
+                break;
+            }
           }
         }
     }
 
-    //add to black list(not working)
+    //when clicked with button add to black list and jump to next song
     function addtoBlakclist(){
         var url = window.location.href;
         var videoId = url.substring(url.indexOf("=")+1);
-        addToBlacklist(videoId, probationDay);
+        addBlacklistCookie(videoId, probationDay);
         if(debug) console.log("VideoID = '"+videoId+"' added to blacklist");
         nextLink();
     }
@@ -112,7 +119,7 @@
         }
     }
 
-    function addToBlacklist(cname, exdays) {
+    function addBlacklistCookie(cname, exdays) {
         var title = '';
         try{
             title = document.getElementById("eow-title").title;
@@ -135,20 +142,27 @@
 
     function getCookieBlacklist(){
         var allCookies = document.cookie.split(';');
+        // clear blacklist first then re-populate
+        blacklist = {};
         for(var i=0; i< allCookies.length; i++){
             var each = allCookies[i];
             while(each.charAt(0)==" "){
                 each = each.substring(1);
             }
             if(each.indexOf("BlackList_") > -1){
-                blacklist.push(each.substring(10,20));
-                nameList.push(each.substring(21));
+                // blacklist.push(each.substring(10,20));
+                // nameList.push(each.substring(21));
+                var Id = each.substring(10,20);
+                var title = each.substring(22);
+                // add the data to blacklist
+                blacklist[Id] = title; 
             }
         }
     }
 
     function clearBlacklist(){
         var allCookies = document.cookie.split(';');
+        // clear list first then re-populate
         for(var i=0; i< allCookies.length; i++){
             var each = allCookies[i];
             while(each.charAt(0)==" "){
@@ -164,11 +178,27 @@
 
     function displayBlacklist(){
         getCookieBlacklist();
-        for(var i in nameList){
-            console.log(nameList[i]+"\n");
+        var count = 1
+        if(  _isEmpty(blacklist) ){
+            console.log("No demon found!");
+        }else{
+            for(var key in blacklist){
+                if(blacklist.hasOwnProperty(key)){
+                    console.log(count+"."+key+" = "+blacklist[key]);
+                    count++;
+                }
+                
+            }
         }
     }
 
-
+    // check if an object is empty
+    function _isEmpty(obj) {
+        for(var prop in obj) {
+            if(obj.hasOwnProperty(prop))
+                return false;
+        }
+        return true;
+    }
    
 })(); //The end of the code
