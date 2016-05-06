@@ -4,54 +4,106 @@
 // @include     https://www.youtube.com/*
 // @version     1
 // @grant       none
-// @require http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
+// @require     http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js
 // @grant       GM_addStyle
 // ==/UserScript==
 
 
 // changes to be made
-// 1. re-style button. Maybe all black with white font
-// 2. make the dropdown work
-// 3. make dropdown panel float
-// 4. move everything inside dropdown
 // 5. Let user do more setting. eg: probabtion day, free individual demon, view all demons in the panel
 // 6. fix if user click button outside song page
 (function() {
     'use strict';
     'allow pasting';
     var debug = true;
-    var probationDay = 7;
+    var prisonDuration = 7;
     var currentURL = "";
-    var blacklist = { "OPf0YbXqDm0" : "uptown funk" };
-
-
+    var blacklist = {};
 
 
     //=============================================  HTML  ============================================
     var buttonSets = document.createElement('div');
-    // buttonSets.innerHTML = '<button id="addtoBL" type="button" class="GM_button" > Banish </button><button id="clear" class="GM_button" type="button" > Free all demon </button><button id="display" class="GM_button" type="button" > show all demon </button>';
     buttonSets.innerHTML = multilineStr(function(){/*
         <button id="addtoBL" type="button" class="GM_button" > Banish </button>
-        <button id="clear" class="GM_button" type="button" > Free all demons </button>
-        <button id="display" class="GM_button" type="button" > show all demons </button>
-        <button id="test" class="GM_button" type="button" > dropdown </button>
-        <div class="dropdownPanel"><div>
-
+        <button id="settings" class="GM_button" type="button" > Settings </button>
     */});
-    
     document.querySelector("#yt-masthead-user").appendChild(buttonSets);
-    document.getElementById("addtoBL").addEventListener("click",addtoBlacklist,false);
-    document.getElementById("clear").addEventListener("click",clearBlacklist,false);  
-    document.getElementById("display").addEventListener("click",displayBlacklist,false);  
+
+
+    var dropdown = document.createElement("div");
+    dropdown.innerHTML = multilineStr(function(){/*
+        <div id="dropdownPanel">
+            <button id="clear" class="GM_button" type="button" style="display:inline-block"> Free all demons(bad idea)? </button>
+            <p style="display:inline-block">Duration:</p>
+            <p style="display:inline-block" id="duration">TBD</P>
+            <form>
+                <label >Change Duration?</label>
+                <input type="button" value="1 Week" id="oneWeek">
+                <input type="button" value="1 Month" id="oneMonth">
+                <input type="button" value="1 Year" id="oneYear">
+            </form>
+            <br>
+            <h3 style="text-align:center;"> Demon Captured</h3>
+            <table id="prisonCells">
+                
+            </table>
+
+        <div>
+    */});
+    // video_list.insertBefore(dropdown, video_list.firstChild);  
+    document.querySelector("#masthead-positioner").appendChild(dropdown);  
+
+  
+    
+
+    // event handlers
+
+    $('#addtoBL').click(function(){
+        addtoBlacklist();
+    });
+    // document.getElementById("addtoBL").addEventListener("click",addtoBlacklist,false);
+    // document.getElementById("clear").addEventListener("click",freeDemon("BlackList_"),false);  
+    $("#clear").click(function(){
+        freeDemon("BlackList_");
+    });
+
+    $('#settings').click(function(){
+        document.getElementById("dropdownPanel").classList.toggle("show");
+        displayBlacklist();
+    });
+
+
+    // document.getElementById("settings").addEventListener("click",toggleDropdown,false); 
+
+
+    // function toggleDropdown(){
+    //     if(debug) console.log("dropdown clicked");
+    //     document.getElementById("dropdownPanel").classList.toggle("show");
+    //     displayBlacklist();
+    // }
+
+    $('#oneWeek').click(function(){
+        if(debug) console.log(this.value);
+        prisonDuration = 7;
+        document.getElementById("duration").innerHTML = prisonDuration.toString();
+    });
+    $('#oneMonth').click(function(){
+        if(debug) console.log(this.value);
+        prisonDuration = 30;
+        document.getElementById("duration").innerHTML = prisonDuration.toString();
+    });
+    $('#oneYear').click(function(){
+        if(debug) console.log(this.value);
+        prisonDuration = 365;
+        document.getElementById("duration").innerHTML = prisonDuration.toString();
+    });
+
+    
+
 
     //=============================================  CSS ===============================================
     GM_addStyle ( multilineStr ( function () {/*!
-        #addtoBL {
-            background-color:red;
-        }
-        #clear {
-            background:green;
-        }
+       
         
 
         .GM_button{
@@ -59,24 +111,49 @@
             cursor: pointer;
             border: 2px black solid;
             border-radius:4px;
+            background-color: #4d4d4d;
+            color:white;
 
         }
 
-        #test{
-            display:none;
+        #clear{
+            margin-top: 5px;
+            margin-left:5px;
         }
 
-        .dropdownPanel{
-            position:absolute:
-            width:50px;
-            height: 150px;
+        #dropdownPanel{
+            position:absolute;
+            width:27vw;
+            left:70vw;
+            height: 200px;
             z-index:100000;
-            background-color:yellow;
+            background-color:#00e600;
+            border: #0066ff 2px solid;
+            border-radius: 5px;
+            overflow-x:hidden;
+            overflow-y:auto;
             display:none;
-
         }
+        
+        .demonName{
+            width:15vw;
+            
+        }
+        
+
+
+       .show{
+            display:block !important;
+        }
+
+        .deleted{
+            display:none !important;
+        }
+
+        
     */} ) );
 
+    
     function multilineStr (dummyFunc) {
         var str = dummyFunc.toString ();
         str     = str.replace (/^[^\/]+\/\*!?/, '') // Strip function () { /*!
@@ -90,15 +167,21 @@
     // ======================================== JavsScripts  ===============================================
 
     // update function, activated every 4 seconds
-	setInterval(function(){
+    setInterval(function(){
 
         // 1. check url change
-		if( window.location.href != currentURL){
-			checkBlacklist();
-			currentURL = window.location.href;
-		}
-		
-	},4000);
+        if( window.location.href != currentURL){
+            checkBlacklist();
+            currentURL = window.location.href;
+        }
+
+        // 2. update duration
+        document.getElementById("duration").innerHTML = prisonDuration.toString();
+
+       
+
+        
+    },3000);
     
 
     function checkBlacklist(){
@@ -118,7 +201,7 @@
     function addtoBlacklist(){
         var url = window.location.href;
         var videoId = url.substring(url.indexOf("=")+1);
-        addBlacklistCookie(videoId, probationDay);
+        addBlacklistCookie(videoId, prisonDuration);
         if(debug) console.log("VideoID = '"+videoId+"' added to blacklist");
         nextLink();
     }
@@ -154,12 +237,16 @@
         setCookie(name,cvalue,exdays);
     } 
 
-
+    
     function setCookie(cname, cvalue, exdays) {
-        var d = new Date();
-        d.setTime(d.getTime() + (exdays*24*60*60*1000));
-        var expires = "expires="+ d.toUTCString();
-        document.cookie = cname + "=" + cvalue + "; " + expires;
+        if(exdays > 0){
+            var d = new Date();
+            d.setTime(d.getTime() + (exdays*24*60*60*1000));
+            var expires = "expires="+ d.toUTCString();
+            document.cookie = cname + "=" + cvalue + "; " + expires;
+        }else{
+            document.cookie = cname +";"+ "expires=Thu, 01 Jan 1970 00:00:00 UTC";
+        }
     }
 
     function getCookieBlacklist(){
@@ -172,8 +259,6 @@
                 each = each.substring(1);
             }
             if(each.indexOf("BlackList_") > -1){
-                // blacklist.push(each.substring(10,20));
-                // nameList.push(each.substring(21));
                 var Id = each.substring(10,20);
                 var title = each.substring(22);
                 // add the data to blacklist
@@ -182,7 +267,7 @@
         }
     }
 
-    function clearBlacklist(){
+    function freeDemon(targetName){
         var allCookies = document.cookie.split(';');
         // clear list first then re-populate
         for(var i=0; i< allCookies.length; i++){
@@ -190,26 +275,39 @@
             while(each.charAt(0)==" "){
                 each = each.substring(1);
             }
-            if(each.indexOf("BlackList_") > -1){
+            if(each.indexOf(targetName) > -1){
                 document.cookie = each+"; "+ "expires=Thu, 01 Jan 1970 00:00:00 UTC";
             }
         }
         if(debug)console.log("current cookies:\n"+document.cookie);
-        alert("All demons are again roaming the Earth !");
+        if(targetName === "BlackList_") alert("All demons are again roaming the Earth !");
     }
 
     function displayBlacklist(){
         getCookieBlacklist();
         var count = 1;
+        var prisonCells = document.querySelector("#prisonCells");
         if(  _isEmpty(blacklist) ){
-            console.log("No demon found!");
+            if(debug) console.log("No demon found!");
+            prisonCells.innerHTML = "No demon imprisoned";
         }else{
+            prisonCells.innerHTML = "";  //clear content first
             for(var key in blacklist){
-                if(blacklist.hasOwnProperty(key)){
-                    console.log(count+"."+key+" = "+blacklist[key]);
+                if(blacklist.hasOwnProperty(key)){  // for each demon, create a tr to hold its data
+                    var demon = document.createElement("tr");
+                    demon.innerHTML = '<tr><td colspan="7" ><h4>'+count+'.</h4>'+key+' = '+blacklist[key]+'</td>  <td colspan="3"><input type="button" value="free" id="'+key+'"> </td></tr>';
+                    prisonCells.appendChild(demon);
+                    if(debug) console.log(count+"."+key+" = "+blacklist[key]);
                     count++;
+                    
+
+                    // initiate an event handle for click
+                    var selector = '#'+key;
+                    $(selector).click(function(){
+                        freeDemon(this.id);
+                        $(this).parents().eq(1).addClass("deleted");       
+                    });
                 }
-                
             }
         }
     }
